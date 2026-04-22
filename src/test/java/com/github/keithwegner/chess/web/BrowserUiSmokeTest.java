@@ -5,14 +5,16 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.WebSocket;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -100,6 +102,15 @@ final class BrowserUiSmokeTest {
                         (async () => {
                             const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
                             const apiState = () => fetch("/api/state").then(response => response.json()).then(payload => payload.state);
+                            const waitForIdle = async () => {
+                                for (let i = 0; i < 30; i++) {
+                                    if (!document.body.classList.contains("is-busy")) {
+                                        return true;
+                                    }
+                                    await delay(100);
+                                }
+                                return false;
+                            };
                             const waitForState = async predicate => {
                                 for (let i = 0; i < 30; i++) {
                                     const next = await apiState();
@@ -117,19 +128,25 @@ final class BrowserUiSmokeTest {
                             const targetCount = document.querySelectorAll(".square__hint.is-target").length;
                             document.querySelector("[data-square='e4']").click();
                             const afterMove = await waitForState(state => state.sideToMove === "BLACK");
+                            await waitForIdle();
 
                             document.getElementById("setup-mode-button").click();
                             await fetch("/api/clear-board", {method: "POST"});
+                            await refreshState();
+                            await waitForIdle();
                             await delay(100);
                             document.querySelector("[data-piece='K']").click();
                             document.querySelector("[data-square='e1']").click();
                             await waitForState(state => state.board.some(square => square.square === "e1" && square.pieceFen === "K"));
+                            await waitForIdle();
                             document.querySelector("[data-piece='k']").click();
                             document.querySelector("[data-square='e8']").click();
                             const afterSetup = await waitForState(state => state.analyzable);
+                            await waitForIdle();
                             document.querySelector("[data-erase='true']").click();
                             document.querySelector("[data-square='e1']").click();
                             const afterErase = await waitForState(state => state.board.some(square => square.square === "e1" && square.pieceFen === ""));
+                            await waitForIdle();
 
                             const fen = "4k3/P7/8/8/8/8/8/7K w - - 0 1";
                             await fetch("/api/load-fen", {
@@ -460,11 +477,24 @@ final class BrowserUiSmokeTest {
         if (path == null || !Files.exists(path)) {
             return;
         }
-        try (var walk = Files.walk(path)) {
-            for (Path next : walk.sorted((left, right) -> right.getNameCount() - left.getNameCount()).toList()) {
-                Files.deleteIfExists(next);
+        Files.walkFileTree(path, new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Files.deleteIfExists(file);
+                return FileVisitResult.CONTINUE;
             }
-        }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                Files.deleteIfExists(dir);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFileFailed(Path file, IOException exc) {
+                return FileVisitResult.CONTINUE;
+            }
+        });
     }
 
     @FunctionalInterface
