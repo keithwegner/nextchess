@@ -428,16 +428,16 @@ function renderArrow(bestMoveUci) {
     const dx = to.x - from.x;
     const dy = to.y - from.y;
     const distance = Math.max(1, Math.hypot(dx, dy));
-    const startInset = 20;
-    const endInset = 34;
+    const startInset = Math.min(42, distance * 0.25);
+    const endInset = Math.min(58, distance * 0.35);
     const x1 = from.x + (dx * startInset) / distance;
     const y1 = from.y + (dy * startInset) / distance;
     const x2 = to.x - (dx * endInset) / distance;
     const y2 = to.y - (dy * endInset) / distance;
     ui.boardArrow.innerHTML = `
         <defs>
-            <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
-                <polygon points="0 0, 10 5, 0 10" fill="rgba(184, 137, 47, 0.88)"></polygon>
+            <marker id="arrowhead" markerWidth="28" markerHeight="24" refX="26" refY="12" orient="auto" markerUnits="userSpaceOnUse">
+                <polygon points="2 3, 26 12, 2 21" fill="rgba(176, 128, 42, 0.72)"></polygon>
             </marker>
         </defs>
         <line
@@ -445,8 +445,8 @@ function renderArrow(bestMoveUci) {
             y1="${y1}"
             x2="${x2}"
             y2="${y2}"
-            stroke="rgba(184, 137, 47, 0.88)"
-            stroke-width="11"
+            stroke="rgba(176, 128, 42, 0.68)"
+            stroke-width="7"
             stroke-linecap="round"
             marker-end="url(#arrowhead)">
         </line>
