@@ -48,13 +48,20 @@ final class BrowserUiSmokeTest {
                         (() => {
                             const board = document.querySelector(".board-frame");
                             const rect = board.getBoundingClientRect();
+                            const bar = document.querySelector(".eval-bar").getBoundingClientRect();
+                            const black = document.querySelector(".eval-label--black").getBoundingClientRect();
+                            const white = document.querySelector(".eval-label--white").getBoundingClientRect();
+                            const scoreStyle = getComputedStyle(document.getElementById("eval-label"));
                             return JSON.stringify({
                                 squares: document.querySelectorAll(".square").length,
                                 pieces: document.querySelectorAll(".square__piece").length,
                                 boardWidth: Math.round(rect.width),
                                 viewport: document.documentElement.clientWidth,
                                 overflowX: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
-                                boardFits: rect.left >= -1 && rect.right <= document.documentElement.clientWidth + 1
+                                boardFits: rect.left >= -1 && rect.right <= document.documentElement.clientWidth + 1,
+                                evalBlackAbove: black.bottom <= bar.top + 1,
+                                evalWhiteBelow: white.top >= bar.bottom - 1,
+                                evalScoreBacked: !["transparent", "rgba(0, 0, 0, 0)"].includes(scoreStyle.backgroundColor)
                             });
                         })()
                         """);
@@ -63,6 +70,9 @@ final class BrowserUiSmokeTest {
             assertContains(desktopMetrics, "\"pieces\":32");
             assertContains(desktopMetrics, "\"overflowX\":false");
             assertContains(desktopMetrics, "\"boardFits\":true");
+            assertContains(desktopMetrics, "\"evalBlackAbove\":true");
+            assertContains(desktopMetrics, "\"evalWhiteBelow\":true");
+            assertContains(desktopMetrics, "\"evalScoreBacked\":true");
 
             String mobileMetrics = withBrowser(chrome, server.baseUrl(), 390, 900, "mobile", client -> {
                 waitForBoard(client);
