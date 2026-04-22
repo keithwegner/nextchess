@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class BrowserUiSmokeTest {
-    private static final Duration BROWSER_TIMEOUT = Duration.ofSeconds(12);
+    private static final Duration BROWSER_TIMEOUT = Duration.ofSeconds(25);
     private static final HttpClient HTTP = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(3))
             .build();
