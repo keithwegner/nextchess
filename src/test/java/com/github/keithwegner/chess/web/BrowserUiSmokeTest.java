@@ -473,10 +473,24 @@ final class BrowserUiSmokeTest {
         throw new IllegalArgumentException("Unterminated JSON string in " + json);
     }
 
-    private static void deleteRecursively(Path path) throws IOException {
-        if (path == null || !Files.exists(path)) {
+    private static void deleteRecursively(Path path) {
+        if (path == null) {
             return;
         }
+        for (int attempt = 0; attempt < 6; attempt++) {
+            if (!Files.exists(path)) {
+                return;
+            }
+            try {
+                deleteRecursivelyOnce(path);
+                return;
+            } catch (IOException ignored) {
+                pauseBeforeRetry();
+            }
+        }
+    }
+
+    private static void deleteRecursivelyOnce(Path path) throws IOException {
         Files.walkFileTree(path, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
@@ -495,6 +509,14 @@ final class BrowserUiSmokeTest {
                 return FileVisitResult.CONTINUE;
             }
         });
+    }
+
+    private static void pauseBeforeRetry() {
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     @FunctionalInterface
