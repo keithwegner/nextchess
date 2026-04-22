@@ -77,6 +77,7 @@
                     <excludes>
                         <exclude>com/github/keithwegner/chess/Main*</exclude>
                         <exclude>com/github/keithwegner/chess/ui/NextChessFrame*</exclude>
+                        <exclude>com/github/keithwegner/chess/web/*</exclude>
                     </excludes>
                 </configuration>
                 <executions>
@@ -88,6 +89,7 @@
                             <excludes>
                                 <exclude>com/github/keithwegner/chess/Main*</exclude>
                                 <exclude>com/github/keithwegner/chess/ui/NextChessFrame*</exclude>
+                                <exclude>com/github/keithwegner/chess/web/*</exclude>
                             </excludes>
                         </configuration>
                         <goals>

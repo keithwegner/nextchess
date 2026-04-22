@@ -29,6 +29,7 @@ public final class PositionAnalyzer {
     }
 
     private AnalysisResult analyzeBuiltin(Position position, EngineConfig config) {
+        String sourceFen = position.toFen();
         MiniEngine.MiniEngineResult result = miniEngine.analyze(position, config.depth(), config.multiPv(), config.thinkTimeSeconds());
         List<CandidateLine> lines = new ArrayList<>();
         for (MiniEngine.MiniEngineLine line : result.lines()) {
@@ -45,6 +46,6 @@ public final class PositionAnalyzer {
                     line.nodes(),
                     null));
         }
-        return new AnalysisResult(result.engineName(), EngineConfig.Mode.BUILTIN, lines, "", position.toFen());
+        return new AnalysisResult(result.engineName(), EngineConfig.Mode.BUILTIN, lines, "", sourceFen);
     }
 }

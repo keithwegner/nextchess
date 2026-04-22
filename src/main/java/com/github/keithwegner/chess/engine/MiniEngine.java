@@ -72,8 +72,12 @@ public final class MiniEngine {
             Side mover = position.sideToMove();
             for (Move move : orderedMoves(position, legalMoves)) {
                 position.makeMove(move);
-                int scoreStm = -evaluateStm(position);
-                position.undoMove();
+                int scoreStm;
+                try {
+                    scoreStm = -evaluateStm(position);
+                } finally {
+                    position.undoMove();
+                }
                 int whiteScore = mover == Side.WHITE ? scoreStm : -scoreStm;
                 fallback.add(new MiniEngineLine(
                         move,
@@ -102,8 +106,12 @@ public final class MiniEngine {
         for (Move move : orderedMoves(position, position.generateLegalMoves())) {
             checkTime();
             position.makeMove(move);
-            SearchResult child = negamax(position, depth - 1, -beta, -alpha, 1);
-            position.undoMove();
+            SearchResult child;
+            try {
+                child = negamax(position, depth - 1, -beta, -alpha, 1);
+            } finally {
+                position.undoMove();
+            }
 
             int score = -child.score();
             int whiteScore = rootSide == Side.WHITE ? score : -score;
@@ -141,8 +149,12 @@ public final class MiniEngine {
         List<Move> bestPv = List.of();
         for (Move move : orderedMoves(position, legalMoves)) {
             position.makeMove(move);
-            SearchResult child = negamax(position, depth - 1, -beta, -alpha, ply + 1);
-            position.undoMove();
+            SearchResult child;
+            try {
+                child = negamax(position, depth - 1, -beta, -alpha, ply + 1);
+            } finally {
+                position.undoMove();
+            }
             int score = -child.score();
             if (score > bestScore) {
                 bestScore = score;
@@ -181,8 +193,12 @@ public final class MiniEngine {
             List<Move> bestPv = List.of();
             for (Move move : orderedMoves(position, legalMoves)) {
                 position.makeMove(move);
-                SearchResult child = quiescence(position, -beta, -alpha, ply + 1);
-                position.undoMove();
+                SearchResult child;
+                try {
+                    child = quiescence(position, -beta, -alpha, ply + 1);
+                } finally {
+                    position.undoMove();
+                }
                 int score = -child.score();
                 if (score > bestScore) {
                     bestScore = score;
@@ -213,8 +229,12 @@ public final class MiniEngine {
         List<Move> bestPv = List.of();
         for (Move move : orderedQuiescenceMoves(position, legalMoves)) {
             position.makeMove(move);
-            SearchResult child = quiescence(position, -beta, -alpha, ply + 1);
-            position.undoMove();
+            SearchResult child;
+            try {
+                child = quiescence(position, -beta, -alpha, ply + 1);
+            } finally {
+                position.undoMove();
+            }
             int score = -child.score();
             if (score > bestScore) {
                 bestScore = score;
