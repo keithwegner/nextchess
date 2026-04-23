@@ -149,6 +149,18 @@ class EngineCoreTest {
     }
 
     @Test
+    void miniEngineReportsExactScoresForMultipleRootCandidates() {
+        MiniEngine.MiniEngineResult result = new MiniEngine().analyze(new Position(), 2, 5, 0.5);
+
+        assertEquals(2, result.depth());
+        assertEquals(5, result.lines().size());
+        assertTrue(result.lines().stream()
+                .map(MiniEngine.MiniEngineLine::rootScoreStm)
+                .distinct()
+                .count() >= 3);
+    }
+
+    @Test
     void positionAnalyzerUsesBuiltInAndFallsBackFromBrokenUci() {
         PositionAnalyzer analyzer = new PositionAnalyzer();
         Position position = new Position();
