@@ -18,13 +18,18 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public final class WebAppServer {
+    private static final String LOOPBACK_HOST = "127.0.0.1";
+
     private final HttpServer server;
     private final ExecutorService executor;
     private final CountDownLatch stopLatch = new CountDownLatch(1);
     private final WebAppSession session = new WebAppSession();
 
-    private WebAppServer(int port) throws IOException {
-        InetSocketAddress address = new InetSocketAddress(InetAddress.getLoopbackAddress(), Math.max(0, port));
+    private WebAppServer(String host, int port) throws IOException {
+        InetAddress bindAddress = host == null || host.isBlank()
+                ? InetAddress.getLoopbackAddress()
+                : InetAddress.getByName(host.trim());
+        InetSocketAddress address = new InetSocketAddress(bindAddress, Math.max(0, port));
         this.server = HttpServer.create(address, 0);
         this.executor = Executors.newCachedThreadPool();
         this.server.setExecutor(executor);
@@ -33,11 +38,21 @@ public final class WebAppServer {
     }
 
     public static WebAppServer start(int port) throws IOException {
-        return new WebAppServer(port);
+        return new WebAppServer(LOOPBACK_HOST, port);
+    }
+
+    public static WebAppServer start(String host, int port) throws IOException {
+        return new WebAppServer(host, port);
     }
 
     public String baseUrl() {
-        return "http://127.0.0.1:" + server.getAddress().getPort();
+        InetAddress address = server.getAddress().getAddress();
+        String host = address.isAnyLocalAddress() ? LOOPBACK_HOST : address.getHostAddress();
+        return "http://" + host + ":" + server.getAddress().getPort();
+    }
+
+    InetSocketAddress address() {
+        return server.getAddress();
     }
 
     public WebAppSession session() {

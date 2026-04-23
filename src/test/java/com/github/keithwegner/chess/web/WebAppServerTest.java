@@ -70,6 +70,26 @@ final class WebAppServerTest {
         }
     }
 
+    @Test
+    void explicitWildcardBindKeepsBaseUrlLocallyReachable() throws IOException, InterruptedException {
+        WebAppServer server = WebAppServer.start("0.0.0.0", 0);
+        try {
+            assertTrue(server.address().getAddress().isAnyLocalAddress());
+            assertTrue(server.baseUrl().startsWith("http://127.0.0.1:"));
+
+            HttpClient client = HttpClient.newHttpClient();
+            HttpResponse<String> stateResponse = client.send(
+                    HttpRequest.newBuilder(URI.create(server.baseUrl() + "/api/state"))
+                            .GET()
+                            .build(),
+                    HttpResponse.BodyHandlers.ofString());
+            assertEquals(200, stateResponse.statusCode());
+            assertTrue(stateResponse.body().contains("\"ok\":true"));
+        } finally {
+            server.stop();
+        }
+    }
+
     private static HttpResponse<String> post(HttpClient client, WebAppServer server, String path, String body)
             throws IOException, InterruptedException {
         return client.send(

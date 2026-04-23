@@ -14,6 +14,7 @@ public final class Main {
     public static void main(String[] args) {
         boolean swingMode = false;
         boolean openBrowser = true;
+        String host = "127.0.0.1";
         int port = 0;
 
         for (String arg : args) {
@@ -25,6 +26,8 @@ public final class Main {
                 openBrowser = false;
             } else if (arg.startsWith("--port=")) {
                 port = parsePort(arg.substring("--port=".length()));
+            } else if (arg.startsWith("--host=")) {
+                host = parseHost(arg.substring("--host=".length()));
             }
         }
 
@@ -33,7 +36,7 @@ public final class Main {
             return;
         }
 
-        launchWeb(port, openBrowser);
+        launchWeb(host, port, openBrowser);
     }
 
     private static void launchSwing() {
@@ -44,9 +47,9 @@ public final class Main {
         SwingUtilities.invokeLater(() -> new NextChessFrame().setVisible(true));
     }
 
-    private static void launchWeb(int port, boolean openBrowser) {
+    private static void launchWeb(String host, int port, boolean openBrowser) {
         try {
-            WebAppServer server = WebAppServer.start(port);
+            WebAppServer server = WebAppServer.start(host, port);
             Runtime.getRuntime().addShutdownHook(new Thread(server::stop, "next-chess-web-shutdown"));
             System.out.println("Next Chess is running at " + server.baseUrl());
             if (openBrowser) {
@@ -74,5 +77,13 @@ public final class Main {
         } catch (NumberFormatException ex) {
             throw new IllegalArgumentException("Invalid port: " + text, ex);
         }
+    }
+
+    private static String parseHost(String text) {
+        String host = text == null ? "" : text.trim();
+        if (host.isBlank()) {
+            throw new IllegalArgumentException("Host must not be blank.");
+        }
+        return host;
     }
 }
