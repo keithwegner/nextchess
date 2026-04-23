@@ -19,6 +19,7 @@ It keeps the same core workflow as the earlier Python version:
 
 - Java 17 or newer
 - Maven 3.9 or newer
+- Docker, if you want to run the containerized browser UI
 
 ## Run
 
@@ -45,6 +46,31 @@ If you want the original Swing interface instead:
 ```bash
 java -jar target/next-chess-desktop-java-1.0.0.jar --swing
 ```
+
+### Docker
+
+To build and run the browser UI with Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8080
+```
+
+The Compose service publishes the app on `127.0.0.1:8080`, so it is reachable from the local machine only by default.
+
+You can also run the same image without Compose:
+
+```bash
+docker build -t nextchess:local .
+docker run --rm -p 127.0.0.1:8080:8080 nextchess:local
+```
+
+The Docker image includes Stockfish and adds its install location to `PATH`. In the app, switch **Mode** to **External UCI Engine**, click **Detect Engine**, then click **Analyze** to use it.
 
 ## Desktop packaging
 
