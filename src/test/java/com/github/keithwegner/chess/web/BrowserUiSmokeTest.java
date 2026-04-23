@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class BrowserUiSmokeTest {
-    private static final Duration BROWSER_TIMEOUT = Duration.ofSeconds(12);
+    private static final Duration BROWSER_TIMEOUT = Duration.ofSeconds(25);
     private static final HttpClient HTTP = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(3))
             .build();
@@ -48,13 +48,20 @@ final class BrowserUiSmokeTest {
                         (() => {
                             const board = document.querySelector(".board-frame");
                             const rect = board.getBoundingClientRect();
+                            const bar = document.querySelector(".eval-bar").getBoundingClientRect();
+                            const black = document.querySelector(".eval-label--black").getBoundingClientRect();
+                            const white = document.querySelector(".eval-label--white").getBoundingClientRect();
+                            const scoreStyle = getComputedStyle(document.getElementById("eval-label"));
                             return JSON.stringify({
                                 squares: document.querySelectorAll(".square").length,
                                 pieces: document.querySelectorAll(".square__piece").length,
                                 boardWidth: Math.round(rect.width),
                                 viewport: document.documentElement.clientWidth,
                                 overflowX: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
-                                boardFits: rect.left >= -1 && rect.right <= document.documentElement.clientWidth + 1
+                                boardFits: rect.left >= -1 && rect.right <= document.documentElement.clientWidth + 1,
+                                evalBlackAbove: black.bottom <= bar.top + 1,
+                                evalWhiteBelow: white.top >= bar.bottom - 1,
+                                evalScoreBacked: !["transparent", "rgba(0, 0, 0, 0)"].includes(scoreStyle.backgroundColor)
                             });
                         })()
                         """);
@@ -63,6 +70,9 @@ final class BrowserUiSmokeTest {
             assertContains(desktopMetrics, "\"pieces\":32");
             assertContains(desktopMetrics, "\"overflowX\":false");
             assertContains(desktopMetrics, "\"boardFits\":true");
+            assertContains(desktopMetrics, "\"evalBlackAbove\":true");
+            assertContains(desktopMetrics, "\"evalWhiteBelow\":true");
+            assertContains(desktopMetrics, "\"evalScoreBacked\":true");
 
             String mobileMetrics = withBrowser(chrome, server.baseUrl(), 390, 900, "mobile", client -> {
                 waitForBoard(client);
@@ -122,6 +132,15 @@ final class BrowserUiSmokeTest {
                                 return apiState();
                             };
 
+                            document.getElementById("think-time").value = "0.05";
+                            document.getElementById("depth").value = "1";
+                            document.getElementById("multi-pv").value = "1";
+                            document.getElementById("analyze-button").click();
+                            await waitForState(state => state.analysis && state.analysis.bestMoveUci && !state.analysis.stale);
+                            await waitForIdle();
+                            const arrowMarker = document.querySelector("#board-arrow marker");
+                            const arrowLine = document.querySelector("#board-arrow line");
+
                             document.querySelector("[data-square='e2']").click();
                             await delay(100);
                             const selected = !!document.querySelector(".square.is-selected[data-square='e2']");
@@ -172,6 +191,10 @@ final class BrowserUiSmokeTest {
                                 setupFen: afterSetup.fen,
                                 setupAnalyzable: afterSetup.analyzable,
                                 erased: afterErase.board.find(square => square.square === "e1").pieceFen === "",
+                                arrowVisible: !!arrowMarker && !!arrowLine,
+                                arrowMarkerUnits: arrowMarker ? arrowMarker.getAttribute("markerUnits") : "",
+                                arrowMarkerWidth: arrowMarker ? arrowMarker.getAttribute("markerWidth") : "",
+                                arrowStrokeWidth: arrowLine ? arrowLine.getAttribute("stroke-width") : "",
                                 promotionOpen,
                                 promotionOptions
                             });
@@ -184,6 +207,10 @@ final class BrowserUiSmokeTest {
             assertContains(flow, "\"afterMoveSide\":\"BLACK\"");
             assertContains(flow, "\"setupAnalyzable\":true");
             assertContains(flow, "\"erased\":true");
+            assertContains(flow, "\"arrowVisible\":true");
+            assertContains(flow, "\"arrowMarkerUnits\":\"userSpaceOnUse\"");
+            assertContains(flow, "\"arrowMarkerWidth\":\"28\"");
+            assertContains(flow, "\"arrowStrokeWidth\":\"7\"");
             assertContains(flow, "\"promotionOpen\":true");
             assertContains(flow, "\"promotionOptions\":4");
         } finally {
