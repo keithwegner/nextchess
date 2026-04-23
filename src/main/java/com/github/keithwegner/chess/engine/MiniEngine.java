@@ -100,15 +100,14 @@ public final class MiniEngine {
     private List<MiniEngineLine> searchRoot(Position position, int depth, int multiPv) throws SearchTimeout {
         Side rootSide = position.sideToMove();
         List<MiniEngineLine> lines = new ArrayList<>();
-        int alpha = -INFINITY;
-        int beta = INFINITY;
 
         for (Move move : orderedMoves(position, position.generateLegalMoves())) {
             checkTime();
             position.makeMove(move);
             SearchResult child;
             try {
-                child = negamax(position, depth - 1, -beta, -alpha, 1);
+                // MultiPV display needs exact root scores, not fail-low bounds from a previous candidate.
+                child = negamax(position, depth - 1, -INFINITY, INFINITY, 1);
             } finally {
                 position.undoMove();
             }
@@ -121,7 +120,6 @@ public final class MiniEngine {
             pv.add(move);
             pv.addAll(child.pv());
             lines.add(new MiniEngineLine(move, score, whiteCp, mateWhite, pv, depth, nodes));
-            alpha = Math.max(alpha, score);
         }
         lines.sort(Comparator.comparingInt(MiniEngineLine::rootScoreStm).reversed());
         return lines.size() > multiPv ? new ArrayList<>(lines.subList(0, multiPv)) : lines;
